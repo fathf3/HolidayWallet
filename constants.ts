@@ -4,13 +4,11 @@ import { Currency, Category, ExchangeRates } from './types';
 // In a real app, fetch these live.
 export const APPROX_RATES_TO_TRY: ExchangeRates = {
   [Currency.TRY]: 1,
-  [Currency.USD]: 34.5,
-  [Currency.EUR]: 36.5,
-  [Currency.GBP]: 43.5,
-  [Currency.BAM]: 18.5,
-  [Currency.RSD]: 0.31,
-  [Currency.MKD]: 0.60,
-  [Currency.ALL]: 0.37
+  [Currency.EUR]: 49,
+  [Currency.BAM]: 25.09,
+  [Currency.RSD]: 0.42,
+  [Currency.MKD]: 0.79,
+  [Currency.ALL]: 0.51
 };
 
 export const convertCurrency = (amount: number, from: Currency, to: Currency): number => {
@@ -50,9 +48,7 @@ export const getCategoryColor = (category: string): string => {
 
 export const CURRENCY_SYMBOLS: Record<Currency, string> = {
   [Currency.TRY]: '₺',
-  [Currency.USD]: '$',
   [Currency.EUR]: '€',
-  [Currency.GBP]: '£',
   [Currency.BAM]: 'KM',
   [Currency.RSD]: 'дин',
   [Currency.MKD]: 'den',

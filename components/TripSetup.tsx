@@ -20,7 +20,7 @@ const TripSetup: React.FC<TripSetupProps> = ({ onSave, onCancel, isLoading = fal
   const [startDate, setStartDate] = useState(formatDate(today));
   const [endDate, setEndDate] = useState(formatDate(nextWeek));
   const [peopleCount, setPeopleCount] = useState(2);
-  const [baseCurrency, setBaseCurrency] = useState<Currency>(Currency.USD);
+  const [baseCurrency, setBaseCurrency] = useState<Currency>(Currency.EUR);
   const [dailyBudgetLimit, setDailyBudgetLimit] = useState<string>('100'); // Default target
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -127,7 +127,7 @@ const App: React.FC = () => {
                                 <h1 className="text-4xl font-bold">HolidayWallet</h1>
                             </div>
                             <p className="text-indigo-100 text-lg mb-8 leading-relaxed">
-                                Seyahat bütçenizi yönetmenin en akıllı yolu. Harcamaları takip edin, arkadaşlarınızla paylaşın ve yapay zeka destekli içgörüler alın.
+                                Seyahat bütçenizi yönetmenin en akıllı yolu. Harcamaları takip edin, arkadaşlarınızla paylaşın ve tatilinizin keyfini çıkarın.
                             </p>
                             <div className="flex gap-3 text-sm font-medium text-indigo-200">
                                 <span className="px-3 py-1 bg-white/10 rounded-full">✈️ Tatil Planlayıcı</span>

@@ -1,8 +1,6 @@
 export enum Currency {
   TRY = 'TRY',
-  USD = 'USD',
   EUR = 'EUR',
-  GBP = 'GBP',
   BAM = 'BAM', // Bosnia
   RSD = 'RSD', // Serbia
   MKD = 'MKD', // Macedonia

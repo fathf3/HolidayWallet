@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import * as firebase from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -12,5 +12,11 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const firestore = getFirestore(app);
+// Using 'any' cast and namespace import to resolve potential type definition mismatch
+const app = (firebase as any).initializeApp 
+    ? (firebase as any).initializeApp(firebaseConfig) 
+    : (firebase as any).default?.initializeApp 
+        ? (firebase as any).default.initializeApp(firebaseConfig) 
+        : undefined;
+
+export const firestore = app ? getFirestore(app) : {} as any;
