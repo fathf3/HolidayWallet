@@ -4,13 +4,13 @@ import { Currency, Category, ExchangeRates } from './types';
 // In a real app, fetch these live.
 export const APPROX_RATES_TO_TRY: ExchangeRates = {
   [Currency.TRY]: 1,
-  [Currency.USD]: 34.5,
-  [Currency.EUR]: 37.2,
-  [Currency.GBP]: 44.0,
-  [Currency.BAM]: 19.0,
-  [Currency.RSD]: 0.32,
-  [Currency.MKD]: 0.60,
-  [Currency.ALL]: 0.37
+  [Currency.USD]: 42.3,
+  [Currency.EUR]: 49,
+  [Currency.GBP]: 55.13,
+  [Currency.BAM]: 25.08,
+  [Currency.RSD]: 0.42,
+  [Currency.MKD]: 0.79,
+  [Currency.ALL]: 0.5
 };
 
 export const convertCurrency = (amount: number, from: Currency, to: Currency): number => {

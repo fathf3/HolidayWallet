@@ -5,8 +5,7 @@ import TripSetup from './components/TripSetup';
 import DashboardStats from './components/DashboardStats';
 import ExpenseForm from './components/ExpenseForm';
 import JoinTrip from './components/JoinTrip';
-import { Plus, Sparkles, Map, LogOut, Wallet, Copy, Check } from 'lucide-react';
-import { analyzeBudget } from './services/geminiService';
+import { Plus, Map, LogOut, Wallet, Copy, Check } from 'lucide-react';
 import { db } from './services/storage';
 
 type AppMode = 'landing' | 'create' | 'join' | 'dashboard';
@@ -16,8 +15,6 @@ const App: React.FC = () => {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
-  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
-  const [loadingAi, setLoadingAi] = useState(false);
   const [loadingDb, setLoadingDb] = useState(false);
   const [viewCurrency, setViewCurrency] = useState<Currency>(Currency.TRY);
   const [copied, setCopied] = useState(false);
@@ -82,7 +79,6 @@ const App: React.FC = () => {
     setMode('landing');
     setTrip(null);
     setExpenses([]);
-    setAiAnalysis(null);
   };
 
   const handleAddExpense = async (rawExpense: Omit<Expense, 'amountInBaseCurrency'>) => {
@@ -108,15 +104,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleGeminiAnalysis = async () => {
-    if (!trip) return;
-    setLoadingAi(true);
-    const total = expenses.reduce((sum, e) => sum + convertCurrency(e.amount, e.currency, trip.baseCurrency), 0);
-    const result = await analyzeBudget(trip, expenses, total);
-    setAiAnalysis(result);
-    setLoadingAi(false);
-  };
-
   const copyTripCode = () => {
       if(!trip) return;
       navigator.clipboard.writeText(trip.id);
@@ -140,7 +127,7 @@ const App: React.FC = () => {
                                 <h1 className="text-4xl font-bold">TatilCüzdanı</h1>
                             </div>
                             <p className="text-indigo-100 text-lg mb-8 leading-relaxed">
-                                Seyahat bütçenizi yönetmenin en akıllı yolu. Harcamalarınızı takip edin, arkadaşlarınızla ortak bütçe yapın ve yapay zeka önerileri alın.
+                                Seyahat bütçenizi yönetmenin en akıllı yolu. Harcamalarınızı takip edin, arkadaşlarınızla ortak bütçe yapın.
                             </p>
                             <div className="flex gap-3 text-sm font-medium text-indigo-200">
                                 <span className="px-3 py-1 bg-white/10 rounded-full">✈️ Seyahat Planı</span>
@@ -174,9 +161,6 @@ const App: React.FC = () => {
                              <span className="text-gray-400 group-hover:text-indigo-500 transition"><LogOut size={24} className="rotate-180" /></span>
                           </button>
                       </div>
-                      <p className="mt-8 text-center text-xs text-gray-400">
-                          Verileriniz şu an için tarayıcınızda saklanmaktadır.
-                      </p>
                   </div>
               </div>
           </div>
@@ -192,7 +176,7 @@ const App: React.FC = () => {
   }
 
   // --- Dashboard Mode ---
-  if (!trip) return null; // Should not happen if mode is dashboard
+  if (!trip) return null; 
 
   return (
     <div className="min-h-screen bg-gray-100 pb-20">
@@ -262,33 +246,11 @@ const App: React.FC = () => {
             <button 
                 type="button"
                 onClick={() => setShowExpenseForm(true)}
-                className="flex-1 bg-black text-white py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 hover:bg-gray-800 transition transform hover:scale-[1.02]"
+                className="w-full bg-black text-white py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 hover:bg-gray-800 transition transform hover:scale-[1.02]"
             >
                 <Plus size={20} /> Harcama Ekle
             </button>
-            <button 
-                type="button"
-                onClick={handleGeminiAnalysis}
-                disabled={loadingAi || expenses.length === 0}
-                className={`flex-1 py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 transition border border-indigo-200 
-                    ${loadingAi || expenses.length === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-indigo-600 hover:bg-indigo-50'}`}
-            >
-                <Sparkles size={20} className={loadingAi ? "animate-spin" : ""} /> 
-                {loadingAi ? 'Analiz Ediliyor...' : 'Yapay Zeka Özeti'}
-            </button>
         </div>
-
-        {/* AI Result Area */}
-        {aiAnalysis && (
-            <div className="bg-gradient-to-r from-indigo-50 to-white border border-indigo-100 rounded-xl p-6 mb-6 shadow-sm animate-fade-in">
-                <h3 className="flex items-center gap-2 font-bold text-indigo-800 mb-3">
-                    <Sparkles size={18} /> Tatil Analizi
-                </h3>
-                <div className="prose prose-sm text-gray-700" dangerouslySetInnerHTML={{ 
-                    __html: aiAnalysis.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') 
-                }} />
-            </div>
-        )}
 
         {/* Expense List */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">

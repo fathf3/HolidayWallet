@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Trip, Currency } from '../types';
-import { Users, Globe, Map, Calendar, CheckCircle } from 'lucide-react';
+import { Users, Globe, Map, CheckCircle, Wallet } from 'lucide-react';
 
 interface TripSetupProps {
   onSave: (tripData: Omit<Trip, 'id'>) => void;
@@ -9,11 +9,19 @@ interface TripSetupProps {
 }
 
 const TripSetup: React.FC<TripSetupProps> = ({ onSave, onCancel, isLoading = false }) => {
+  // Varsayılan tarihleri ayarla (Bugün ve 1 hafta sonrası)
+  const today = new Date();
+  const nextWeek = new Date(today);
+  nextWeek.setDate(today.getDate() + 7);
+
+  const formatDate = (date: Date) => date.toISOString().split('T')[0];
+
   const [name, setName] = useState('Balkan Turu');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [peopleCount, setPeopleCount] = useState(1);
+  const [startDate, setStartDate] = useState(formatDate(today));
+  const [endDate, setEndDate] = useState(formatDate(nextWeek));
+  const [peopleCount, setPeopleCount] = useState(2);
   const [baseCurrency, setBaseCurrency] = useState<Currency>(Currency.TRY);
+  const [dailyBudgetLimit, setDailyBudgetLimit] = useState<string>('2000'); // Varsayılan hedef
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +32,8 @@ const TripSetup: React.FC<TripSetupProps> = ({ onSave, onCancel, isLoading = fal
       startDate,
       endDate,
       peopleCount,
-      baseCurrency
+      baseCurrency,
+      dailyBudgetLimit: dailyBudgetLimit ? parseFloat(dailyBudgetLimit) : 0
     };
     onSave(newTripData);
   };
@@ -104,6 +113,23 @@ const TripSetup: React.FC<TripSetupProps> = ({ onSave, onCancel, isLoading = fal
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          {/* Hedef Bütçe Alanı */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Hedef Günlük Bütçe ({baseCurrency})</label>
+            <div className="relative">
+                <Wallet className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                    type="number"
+                    min="0"
+                    value={dailyBudgetLimit}
+                    onChange={(e) => setDailyBudgetLimit(e.target.value)}
+                    className="pl-10 w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900"
+                    placeholder="Örn: 2000"
+                />
+                <p className="text-xs text-gray-500 mt-1 ml-1">Tüm grup için günlük ne kadar harcamayı planlıyorsunuz?</p>
             </div>
           </div>
 

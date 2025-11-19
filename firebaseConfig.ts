@@ -1,22 +1,18 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 
-// Lütfen Firebase Console'dan aldığınız kendi yapılandırma bilgilerinizi buraya girin.
-// 1. https://console.firebase.google.com adresine gidin.
-// 2. Yeni proje oluşturun.
-// 3. Web uygulaması ekleyin (</> ikonu).
-// 4. Size verilen config objesini aşağıdaki alanlara yapıştırın.
 const firebaseConfig = {
-  apiKey: "AIzaSyD-YOUR_API_KEY_HERE",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  apiKey: "AIzaSyBw4JJsvupQCLPl2wCECuqD0xYdhcPW238",
+  authDomain: "holidaywallet.firebaseapp.com",
+  projectId: "holidaywallet",
+  storageBucket: "holidaywallet.firebasestorage.app",
+  messagingSenderId: "758562691404",
+  appId: "1:758562691404:web:1d5cef1d1ef963152a97e9",
+  measurementId: "G-L8X74763PM"
 };
 
-// Firebase uygulamasını başlat
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Firestore veritabanı örneğini al
+// Initialize Cloud Firestore
 export const firestore = getFirestore(app);

@@ -25,6 +25,7 @@ export interface Trip {
   endDate: string;
   peopleCount: number;
   baseCurrency: Currency;
+  dailyBudgetLimit?: number; // Kullanıcının hedeflediği günlük harcama limiti
 }
 
 export interface Expense {
@@ -35,9 +36,9 @@ export interface Expense {
   currency: Currency;
   category: Category;
   date: string;
-  location: string; // City, Country formatında tutulmaya devam eder (Geriye dönük uyumluluk ve gösterim için)
-  city: string;     // Yeni: Ayrıştırılmış Şehir
-  country: string;  // Yeni: Ayrıştırılmış Ülke
+  location: string; // City, Country formatında tutulmaya devam eder
+  city: string;     // Ayrıştırılmış Şehir
+  country: string;  // Ayrıştırılmış Ülke
   amountInBaseCurrency?: number; // Calculated helper
 }
 

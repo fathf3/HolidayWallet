@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Trip, Expense, Currency, Category } from '../types';
 import { CURRENCY_SYMBOLS, CATEGORY_COLORS, convertCurrency } from '../constants';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 interface DashboardStatsProps {
   trip: Trip;
@@ -9,98 +9,110 @@ interface DashboardStatsProps {
   viewCurrency: Currency;
 }
 
+const COLORS_LOCATION = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A284F9', '#F984A8', '#84F9E9'];
+
 const DashboardStats: React.FC<DashboardStatsProps> = ({ trip, expenses, viewCurrency }) => {
   const symbol = CURRENCY_SYMBOLS[viewCurrency];
+  
+  // Hedef Bütçeyi Görüntülenen Para Birimine Çevir
+  // trip.dailyBudgetLimit, trip.baseCurrency cinsinden kaydedilmiştir.
+  const dailyLimitRaw = trip.dailyBudgetLimit || 0;
+  const dailyLimit = convertCurrency(dailyLimitRaw, trip.baseCurrency, viewCurrency);
 
   // --- Date Calculations ---
   const start = new Date(trip.startDate);
   const end = new Date(trip.endDate);
   
-  // 1. Total Trip Duration (Days) - Used for "General Daily Average" (Budgeting)
-  // Adding 1 to include the end date as a full day
+  // Total Trip Duration (Days)
   const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
 
-  // 2. Days Since First Expense (Days) - Used for "Actual Daily Average" (Burn Rate)
-  // Logic: Find the earliest expense date. If no expenses, use trip start date.
-  const earliestExpenseDateStr = expenses.length > 0
-    ? expenses.reduce((min, curr) => curr.date < min ? curr.date : min, expenses[0].date)
-    : trip.startDate;
-
-  const firstExpenseDate = new Date(earliestExpenseDateStr);
+  // Days Since First Expense (Days) - Used for "Actual Daily Average"
   const today = new Date();
+  let daysPassed = 1;
   
-  // Normalize times to midnight for accurate day diff counting
-  firstExpenseDate.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-
-  // Calculate days passed since the first expense (including today)
-  let daysSinceSpendingStarted = Math.floor((today.getTime() - firstExpenseDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-  
-  // Constraints:
-  // - Cannot be less than 1 (avoid division by zero)
-  daysSinceSpendingStarted = Math.max(1, daysSinceSpendingStarted);
+  if (today < start) {
+      daysPassed = 0; // Trip hasn't started
+  } else if (today > end) {
+      daysPassed = totalDays; // Trip finished
+  } else {
+      daysPassed = Math.max(1, Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+  }
 
   // --- Financial Calculations ---
   const totalSpent = useMemo(() => {
-      return expenses.reduce((acc, curr) => {
-          return acc + convertCurrency(curr.amount, curr.currency, viewCurrency);
-      }, 0);
+    return expenses.reduce((acc, curr) => {
+      return acc + convertCurrency(curr.amount, curr.currency, viewCurrency);
+    }, 0);
   }, [expenses, viewCurrency]);
 
-  const dailyAverageTotal = totalSpent / totalDays; // General Plan (Total / Trip Duration)
-  const dailyAverageActual = totalSpent / daysSinceSpendingStarted; // Real Burn Rate (Total / Days since first payment)
-  const perPerson = totalSpent / trip.peopleCount;
-
-  // --- Chart Data ---
+  const dailyAverage = daysPassed > 0 ? totalSpent / daysPassed : 0;
+  const costPerPerson = totalSpent / trip.peopleCount;
+  
+  // --- Chart Data Preparation ---
+  
+  // 1. By Category
   const categoryData = useMemo(() => {
-    const data = expenses.reduce((acc, curr) => {
-        const amount = convertCurrency(curr.amount, curr.currency, viewCurrency);
-        if (!acc[curr.category]) {
-          acc[curr.category] = { name: curr.category, value: 0 };
-        }
-        acc[curr.category].value += amount;
-        return acc;
-      }, {} as Record<string, { name: Category; value: number }>);
-      
-    return Object.values(data);
+    const data: Record<string, number> = {};
+    expenses.forEach(e => {
+      const amount = convertCurrency(e.amount, e.currency, viewCurrency);
+      data[e.category] = (data[e.category] || 0) + amount;
+    });
+    return Object.keys(data).map(key => ({
+      name: key,
+      value: data[key]
+    }));
   }, [expenses, viewCurrency]);
+
+  // 2. By Location (City or Country)
+  const locationData = useMemo(() => {
+      const data: Record<string, number> = {};
+      expenses.forEach(e => {
+          const amount = convertCurrency(e.amount, e.currency, viewCurrency);
+          // Use City if available, else Country, else 'Other'
+          const loc = e.city || e.country || 'Diğer';
+          data[loc] = (data[loc] || 0) + amount;
+      });
+      return Object.keys(data).map(key => ({
+          name: key,
+          value: data[key]
+      }));
+  }, [expenses, viewCurrency]);
+
+  // --- Budget Logic ---
+  const budgetStatus = useMemo(() => {
+      if (dailyLimit === 0) return { status: 'neutral', message: 'Hedef bütçe belirlenmedi.' };
+      
+      const diff = dailyLimit - dailyAverage;
+      const percent = (dailyAverage / dailyLimit) * 100;
+
+      if (percent > 100) {
+          return { 
+              status: 'danger', 
+              message: `Hedefin üzerindesiniz! Günlük ortalamanız hedeften ${Math.abs(diff).toFixed(0)} ${symbol} fazla.` 
+            };
+      } else if (percent > 85) {
+          return { 
+              status: 'warning', 
+              message: `Sınıra yaklaştınız (%${percent.toFixed(0)}). Biraz dikkatli olun.` 
+            };
+      } else {
+          return { 
+              status: 'success', 
+              message: `Harika! Hedefin altındasınız (%${percent.toFixed(0)}).` 
+            };
+      }
+  }, [dailyLimit, dailyAverage, symbol]);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      {/* Card 1: Total Spent */}
-      <div className="bg-white p-5 rounded-xl shadow-sm border-l-4 border-indigo-500">
-        <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Toplam Harcama</p>
-        <h3 className="text-2xl font-bold text-gray-800 mt-1">{symbol}{totalSpent.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h3>
-        <p className="text-xs text-gray-400 mt-1">{viewCurrency} bazında</p>
-      </div>
-
-      {/* Card 2: Actual Daily Average (Burn Rate) */}
-      <div className="bg-white p-5 rounded-xl shadow-sm border-l-4 border-rose-500">
-        <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Güncel Günlük Ort.</p>
-        <h3 className="text-2xl font-bold text-gray-800 mt-1">{symbol}{dailyAverageActual.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h3>
-        <p className="text-xs text-gray-400 mt-1">İlk harcamadan beri ({daysSinceSpendingStarted} gün)</p>
-      </div>
-
-      {/* Card 3: Planned Daily Average (Budget) */}
-      <div className="bg-white p-5 rounded-xl shadow-sm border-l-4 border-green-500">
-        <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Genel Günlük Ort.</p>
-        <h3 className="text-2xl font-bold text-gray-800 mt-1">{symbol}{dailyAverageTotal.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h3>
-        <p className="text-xs text-gray-400 mt-1">Toplam tatil süresi ({totalDays} gün)</p>
-      </div>
-
-      {/* Card 4: Per Person */}
-      <div className="bg-white p-5 rounded-xl shadow-sm border-l-4 border-orange-500">
-        <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Kişi Başı Maliyet</p>
-        <h3 className="text-2xl font-bold text-gray-800 mt-1">{symbol}{perPerson.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}</h3>
-        <p className="text-xs text-gray-400 mt-1">{trip.peopleCount} kişi</p>
-      </div>
-
-      {/* Charts Section */}
-      {expenses.length > 0 && (
-        <div className="col-span-1 sm:col-span-2 lg:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div className="bg-white p-6 rounded-xl shadow-sm">
-                <h4 className="font-semibold text-gray-700 mb-4">Kategori Dağılımı ({viewCurrency})</h4>
-                <div className="h-64 w-full">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      
+      {/* Left Column: Charts (Span 2) */}
+      <div className="md:col-span-2 space-y-4">
+          {/* Category Chart */}
+          <div className="bg-white p-4 rounded-xl shadow-sm flex flex-col h-[300px]">
+             <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Kategori Dağılımı</h3>
+             <div className="flex-1 w-full">
+                {categoryData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
@@ -113,59 +125,111 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ trip, expenses, viewCur
                                 dataKey="value"
                             >
                                 {categoryData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[entry.name] || '#8884d8'} />
+                                    <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[entry.name as Category] || '#ccc'} />
                                 ))}
                             </Pie>
-                            <Tooltip formatter={(value: number) => `${symbol}${value.toFixed(0)}`} />
+                            <Tooltip formatter={(value: number) => `${value.toFixed(0)} ${symbol}`} />
+                            <Legend />
                         </PieChart>
                     </ResponsiveContainer>
-                </div>
-                <div className="flex flex-wrap justify-center gap-2 mt-2">
-                    {categoryData.map((entry) => (
-                        <div key={entry.name} className="flex items-center text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded-full">
-                            <span className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: CATEGORY_COLORS[entry.name] || '#8884d8' }}></span>
-                            {entry.name}
-                        </div>
-                    ))}
-                </div>
-            </div>
+                ) : (
+                    <div className="h-full flex items-center justify-center text-gray-300 text-sm">Veri yok</div>
+                )}
+             </div>
+          </div>
 
-            {/* Simple Advice Card */}
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-xl shadow-sm text-white flex flex-col justify-center">
-                <h4 className="font-semibold text-lg mb-2">Hızlı İstatistikler</h4>
-                <ul className="space-y-3 text-sm text-slate-300">
-                    <li className="flex justify-between">
-                        <span>Toplam İşlem:</span>
-                        <span className="font-bold text-white">{expenses.length}</span>
-                    </li>
-                    <li className="flex justify-between">
-                        <span>En Yüksek Harcama:</span>
-                        <span className="font-bold text-white">
-                            {expenses.length > 0 ? Math.max(...expenses.map(e => convertCurrency(e.amount, e.currency, viewCurrency))).toFixed(0) : 0} {symbol}
-                        </span>
-                    </li>
-                    <li className="flex justify-between">
-                        <span>En Çok Harcanan Yer:</span>
-                         <span className="font-bold text-white">
-                            {expenses.length > 0 ? 
-                                Object.entries(expenses.reduce((acc, curr) => {
-                                    acc[curr.location] = (acc[curr.location] || 0) + 1;
-                                    return acc;
-                                }, {} as any)).sort((a:any, b:any) => b[1] - a[1])[0]?.[0] 
-                            : '-'}
-                         </span>
-                    </li>
-                    <li className="pt-4 border-t border-slate-700 mt-2">
-                        <p className="text-xs text-slate-400">
-                            {dailyAverageActual > dailyAverageTotal 
-                                ? "⚠️ Dikkat: Harcamalarınız başladığından beri günlük ortalamanız, genel bütçe ortalamasının üzerinde."
-                                : "✅ Harika: Planlanan günlük ortalamanın altında harcıyorsunuz."}
-                        </p>
-                    </li>
-                </ul>
+           {/* Location Chart */}
+           <div className="bg-white p-4 rounded-xl shadow-sm flex flex-col h-[300px]">
+             <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Konum Dağılımı</h3>
+             <div className="flex-1 w-full">
+                {locationData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={locationData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={80}
+                                paddingAngle={5}
+                                dataKey="value"
+                            >
+                                {locationData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS_LOCATION[index % COLORS_LOCATION.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip formatter={(value: number) => `${value.toFixed(0)} ${symbol}`} />
+                            <Legend />
+                        </PieChart>
+                    </ResponsiveContainer>
+                ) : (
+                    <div className="h-full flex items-center justify-center text-gray-300 text-sm">Veri yok</div>
+                )}
+             </div>
+          </div>
+      </div>
+
+      {/* Right Column: Stats & Budget (Span 1) */}
+      <div className="md:col-span-1 space-y-4">
+         
+         {/* Main Stats Cards */}
+         <div className="bg-indigo-600 rounded-xl p-6 text-white shadow-lg">
+            <p className="text-indigo-200 text-sm font-medium mb-1">Toplam Harcama</p>
+            <p className="text-3xl font-bold">{totalSpent.toFixed(0)} <span className="text-lg opacity-70">{symbol}</span></p>
+            
+            <div className="mt-6 pt-6 border-t border-indigo-500/30 space-y-4">
+                 <div>
+                    <p className="text-indigo-200 text-xs uppercase font-bold">Kişi Başı</p>
+                    <p className="text-xl font-semibold">{costPerPerson.toFixed(0)} {symbol}</p>
+                 </div>
+                 <div>
+                    <p className="text-indigo-200 text-xs uppercase font-bold">Günlük Ortalama</p>
+                    <p className="text-xl font-semibold">{dailyAverage.toFixed(0)} {symbol}</p>
+                 </div>
             </div>
-        </div>
-      )}
+         </div>
+
+         {/* Budget Analysis Card */}
+         <div className={`bg-white rounded-xl p-6 shadow-sm border-l-4 ${
+             budgetStatus.status === 'danger' ? 'border-red-500' :
+             budgetStatus.status === 'warning' ? 'border-yellow-500' :
+             budgetStatus.status === 'success' ? 'border-green-500' : 'border-gray-300'
+         }`}>
+             <h3 className="text-sm font-bold text-gray-800 uppercase mb-2">Bütçe Analizi</h3>
+             
+             <div className="flex justify-between items-center mb-2">
+                <span className="text-xs text-gray-500">Hedef (Günlük)</span>
+                <span className="font-bold text-gray-900">{dailyLimit.toFixed(0)} {symbol}</span>
+             </div>
+             <div className="flex justify-between items-center mb-4">
+                <span className="text-xs text-gray-500">Gerçekleşen (Günlük)</span>
+                <span className={`font-bold ${
+                    budgetStatus.status === 'danger' ? 'text-red-600' :
+                    budgetStatus.status === 'warning' ? 'text-yellow-600' : 'text-green-600'
+                }`}>{dailyAverage.toFixed(0)} {symbol}</span>
+             </div>
+             
+             <p className={`text-sm leading-relaxed ${
+                 budgetStatus.status === 'danger' ? 'text-red-700' :
+                 budgetStatus.status === 'warning' ? 'text-yellow-700' :
+                 budgetStatus.status === 'success' ? 'text-green-700' : 'text-gray-600'
+             }`}>
+                 {budgetStatus.message}
+             </p>
+         </div>
+
+         {/* Mini Info */}
+         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+             <div className="flex justify-between text-sm mb-1">
+                <span className="text-gray-500">Tatil Süresi</span>
+                <span className="font-medium text-gray-900">{totalDays} Gün</span>
+             </div>
+             <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Geçen Süre</span>
+                <span className="font-medium text-gray-900">{daysPassed} Gün</span>
+             </div>
+         </div>
+      </div>
     </div>
   );
 };
