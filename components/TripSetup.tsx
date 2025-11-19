@@ -9,7 +9,7 @@ interface TripSetupProps {
 }
 
 const TripSetup: React.FC<TripSetupProps> = ({ onSave, onCancel, isLoading = false }) => {
-  // Varsayılan tarihleri ayarla (Bugün ve 1 hafta sonrası)
+  // Default dates (Today and 1 week later)
   const today = new Date();
   const nextWeek = new Date(today);
   nextWeek.setDate(today.getDate() + 7);
@@ -20,8 +20,8 @@ const TripSetup: React.FC<TripSetupProps> = ({ onSave, onCancel, isLoading = fal
   const [startDate, setStartDate] = useState(formatDate(today));
   const [endDate, setEndDate] = useState(formatDate(nextWeek));
   const [peopleCount, setPeopleCount] = useState(2);
-  const [baseCurrency, setBaseCurrency] = useState<Currency>(Currency.TRY);
-  const [dailyBudgetLimit, setDailyBudgetLimit] = useState<string>('2000'); // Varsayılan hedef
+  const [baseCurrency, setBaseCurrency] = useState<Currency>(Currency.USD);
+  const [dailyBudgetLimit, setDailyBudgetLimit] = useState<string>('100'); // Default target
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,9 +43,9 @@ const TripSetup: React.FC<TripSetupProps> = ({ onSave, onCancel, isLoading = fal
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden">
         <div className="bg-indigo-600 p-6 text-center">
           <h1 className="text-3xl font-bold text-white flex items-center justify-center gap-2">
-            <Map size={32} /> TatilCüzdanı
+            <Map size={32} /> HolidayWallet
           </h1>
-          <p className="text-indigo-100 mt-2">Yeni bir macera oluşturun</p>
+          <p className="text-indigo-100 mt-2">Yeni bir macera oluştur</p>
         </div>
         
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
@@ -58,7 +58,7 @@ const TripSetup: React.FC<TripSetupProps> = ({ onSave, onCancel, isLoading = fal
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="pl-10 w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition text-gray-900"
-                placeholder="Örn: İtalya Gezisi"
+                placeholder="Örn: İtalya Turu"
                 required
               />
             </div>
@@ -103,7 +103,7 @@ const TripSetup: React.FC<TripSetupProps> = ({ onSave, onCancel, isLoading = fal
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ana Para Birimi</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Para Birimi</label>
               <select
                 value={baseCurrency}
                 onChange={(e) => setBaseCurrency(e.target.value as Currency)}
@@ -116,9 +116,9 @@ const TripSetup: React.FC<TripSetupProps> = ({ onSave, onCancel, isLoading = fal
             </div>
           </div>
 
-          {/* Hedef Bütçe Alanı */}
+          {/* Target Budget Area */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hedef Günlük Bütçe ({baseCurrency})</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Günlük Bütçe Hedefi ({baseCurrency})</label>
             <div className="relative">
                 <Wallet className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
@@ -127,9 +127,9 @@ const TripSetup: React.FC<TripSetupProps> = ({ onSave, onCancel, isLoading = fal
                     value={dailyBudgetLimit}
                     onChange={(e) => setDailyBudgetLimit(e.target.value)}
                     className="pl-10 w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900"
-                    placeholder="Örn: 2000"
+                    placeholder="Örn: 100"
                 />
-                <p className="text-xs text-gray-500 mt-1 ml-1">Tüm grup için günlük ne kadar harcamayı planlıyorsunuz?</p>
+                <p className="text-xs text-gray-500 mt-1 ml-1">Tüm grup için planlanan günlük harcama?</p>
             </div>
           </div>
 

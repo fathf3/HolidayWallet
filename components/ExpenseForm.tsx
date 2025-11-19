@@ -15,7 +15,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ tripId, onSave, onClose }) =>
   const [category, setCategory] = useState<Category>(Category.Food);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   
-  // Yeni ayrıştırılmış state'ler
+  // New parsed states
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
 
@@ -23,7 +23,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ tripId, onSave, onClose }) =>
     e.preventDefault();
     if (!description || !amount || !date) return;
 
-    // Konum verisini birleştir (Eski yapıyı bozmamak için)
+    // Combine location data (Keep legacy structure support)
     const locationCombined = (city && country) ? `${city}, ${country}` : (city || country || 'Bilinmiyor');
 
     onSave({
@@ -45,7 +45,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ tripId, onSave, onClose }) =>
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-          <h3 className="text-lg font-bold text-gray-800">Yeni Harcama Ekle</h3>
+          <h3 className="text-lg font-bold text-gray-800">Harcama Ekle</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X size={24} />
           </button>
@@ -53,7 +53,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ tripId, onSave, onClose }) =>
         
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Harcama Adı / Ürün</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Açıklama</label>
             <input
               type="text"
               value={description}
@@ -117,7 +117,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ tripId, onSave, onClose }) =>
             </div>
           </div>
 
-          {/* Yeni Ülke ve Şehir Alanları */}
+          {/* New Country and City Fields */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Ülke</label>
@@ -152,7 +152,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ tripId, onSave, onClose }) =>
             className="w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition flex items-center justify-center gap-2 mt-4"
           >
             <PlusCircle size={20} />
-            Harcama Ekle
+            Ekle
           </button>
         </form>
       </div>

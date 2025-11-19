@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { Trip, Expense, Currency, Category } from '../types';
-import { CURRENCY_SYMBOLS, CATEGORY_COLORS, convertCurrency } from '../constants';
+import { Trip, Expense, Currency } from '../types';
+import { CURRENCY_SYMBOLS, getCategoryColor, convertCurrency } from '../constants';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 interface DashboardStatsProps {
@@ -14,8 +14,7 @@ const COLORS_LOCATION = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A284F9', 
 const DashboardStats: React.FC<DashboardStatsProps> = ({ trip, expenses, viewCurrency }) => {
   const symbol = CURRENCY_SYMBOLS[viewCurrency];
   
-  // Hedef Bütçeyi Görüntülenen Para Birimine Çevir
-  // trip.dailyBudgetLimit, trip.baseCurrency cinsinden kaydedilmiştir.
+  // Convert Daily Budget Limit to View Currency
   const dailyLimitRaw = trip.dailyBudgetLimit || 0;
   const dailyLimit = convertCurrency(dailyLimitRaw, trip.baseCurrency, viewCurrency);
 
@@ -80,7 +79,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ trip, expenses, viewCur
 
   // --- Budget Logic ---
   const budgetStatus = useMemo(() => {
-      if (dailyLimit === 0) return { status: 'neutral', message: 'Hedef bütçe belirlenmedi.' };
+      if (dailyLimit === 0) return { status: 'neutral', message: 'Günlük limit belirlenmedi.' };
       
       const diff = dailyLimit - dailyAverage;
       const percent = (dailyAverage / dailyLimit) * 100;
@@ -88,17 +87,17 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ trip, expenses, viewCur
       if (percent > 100) {
           return { 
               status: 'danger', 
-              message: `Hedefin üzerindesiniz! Günlük ortalamanız hedeften ${Math.abs(diff).toFixed(0)} ${symbol} fazla.` 
+              message: `Bütçeyi aştınız! Günlük planlanandan ${Math.abs(diff).toFixed(0)} ${symbol} fazla harcıyorsunuz.` 
             };
       } else if (percent > 85) {
           return { 
               status: 'warning', 
-              message: `Sınıra yaklaştınız (%${percent.toFixed(0)}). Biraz dikkatli olun.` 
+              message: `Limite yaklaşıyorsunuz (%${percent.toFixed(0)}). Dikkatli olun.` 
             };
       } else {
           return { 
               status: 'success', 
-              message: `Harika! Hedefin altındasınız (%${percent.toFixed(0)}).` 
+              message: `Harika! Bütçenin altındasınız (%${percent.toFixed(0)}).` 
             };
       }
   }, [dailyLimit, dailyAverage, symbol]);
@@ -125,7 +124,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ trip, expenses, viewCur
                                 dataKey="value"
                             >
                                 {categoryData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[entry.name as Category] || '#ccc'} />
+                                    <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name)} />
                                 ))}
                             </Pie>
                             <Tooltip formatter={(value: number) => `${value.toFixed(0)} ${symbol}`} />
@@ -221,11 +220,11 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ trip, expenses, viewCur
          {/* Mini Info */}
          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-500">Tatil Süresi</span>
+                <span className="text-gray-500">Süre</span>
                 <span className="font-medium text-gray-900">{totalDays} Gün</span>
              </div>
              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Geçen Süre</span>
+                <span className="text-gray-500">Geçen Zaman</span>
                 <span className="font-medium text-gray-900">{daysPassed} Gün</span>
              </div>
          </div>

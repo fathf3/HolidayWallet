@@ -1,15 +1,15 @@
 import { Trip, Expense } from '../types';
 import { firestore } from '../firebaseConfig';
 import { 
-    collection, 
-    doc, 
-    setDoc, 
-    getDoc, 
-    getDocs, 
-    query, 
-    where, 
-    deleteDoc 
-} from 'firebase/firestore';
+  collection, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  getDocs, 
+  query, 
+  where, 
+  deleteDoc 
+} from "firebase/firestore";
 
 // LocalStorage Fallback Keys
 const STORAGE_KEY_TRIPS = 'db_trips';
@@ -48,7 +48,7 @@ const localDb = {
 };
 
 export const db = {
-    // Tur Oluştur
+    // Create Trip
     createTrip: async (tripData: Omit<Trip, 'id'>): Promise<Trip> => {
         const code = generateTripCode();
         const newTrip: Trip = { ...tripData, id: code };
@@ -62,7 +62,7 @@ export const db = {
         return newTrip;
     },
 
-    // Tur Getir
+    // Get Trip
     getTrip: async (tripId: string): Promise<Trip | null> => {
         try {
             const docRef = doc(firestore, "trips", tripId);
@@ -77,7 +77,7 @@ export const db = {
         return localDb.getTrip(tripId);
     },
 
-    // Harcamaları Getir
+    // Get Expenses
     getExpenses: async (tripId: string): Promise<Expense[]> => {
         try {
             const expensesRef = collection(firestore, "expenses");
@@ -95,7 +95,7 @@ export const db = {
         return localDb.getExpenses(tripId);
     },
 
-    // Harcama Ekle
+    // Add Expense
     addExpense: async (expense: Expense): Promise<Expense> => {
         try {
             await setDoc(doc(firestore, "expenses", expense.id), expense);
@@ -106,7 +106,7 @@ export const db = {
         return expense;
     },
 
-    // Harcama Sil
+    // Delete Expense
     deleteExpense: async (tripId: string, expenseId: string): Promise<void> => {
         try {
             await deleteDoc(doc(firestore, "expenses", expenseId));

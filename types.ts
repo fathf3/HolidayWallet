@@ -13,7 +13,7 @@ export enum Category {
   Accommodation = 'Konaklama',
   Food = 'Yeme-İçme',
   Transport = 'Ulaşım',
-  Activity = 'Aktivite/Müze',
+  Activity = 'Aktivite',
   Shopping = 'Alışveriş',
   Other = 'Diğer'
 }
@@ -25,7 +25,7 @@ export interface Trip {
   endDate: string;
   peopleCount: number;
   baseCurrency: Currency;
-  dailyBudgetLimit?: number; // Kullanıcının hedeflediği günlük harcama limiti
+  dailyBudgetLimit?: number; // User's target daily budget
 }
 
 export interface Expense {
@@ -36,12 +36,12 @@ export interface Expense {
   currency: Currency;
   category: Category;
   date: string;
-  location: string; // City, Country formatında tutulmaya devam eder
-  city: string;     // Ayrıştırılmış Şehir
-  country: string;  // Ayrıştırılmış Ülke
+  location: string; // City, Country format
+  city: string;     // Parsed City
+  country: string;  // Parsed Country
   amountInBaseCurrency?: number; // Calculated helper
 }
 
 export interface ExchangeRates {
-  [key: string]: number; // Rate relative to Base (simplified)
+  [key: string]: number; // Rate relative to Base
 }

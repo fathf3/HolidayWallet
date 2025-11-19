@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trip, Expense, Currency } from './types';
-import { convertCurrency } from './constants';
+import { convertCurrency, getCategoryColor } from './constants';
 import TripSetup from './components/TripSetup';
 import DashboardStats from './components/DashboardStats';
 import ExpenseForm from './components/ExpenseForm';
@@ -19,7 +19,7 @@ const App: React.FC = () => {
   const [viewCurrency, setViewCurrency] = useState<Currency>(Currency.TRY);
   const [copied, setCopied] = useState(false);
 
-  // Sayfa yüklendiğinde aktif son oturumu kontrol et
+  // Check active session on load
   useEffect(() => {
     const lastTripId = localStorage.getItem('active_trip_id');
     if (lastTripId) {
@@ -27,7 +27,7 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Veritabanından turu yükle
+  // Load trip from DB
   const loadTrip = async (tripId: string) => {
     setLoadingDb(true);
     try {
@@ -38,10 +38,10 @@ const App: React.FC = () => {
             setExpenses(expenseData);
             setViewCurrency(tripData.baseCurrency);
             setMode('dashboard');
-            // Oturumu hatırla
+            // Remember session
             localStorage.setItem('active_trip_id', tripId);
         } else {
-            alert('Tur bulunamadı.');
+            alert('Tatil bulunamadı.');
             setMode('landing');
             localStorage.removeItem('active_trip_id');
         }
@@ -59,7 +59,7 @@ const App: React.FC = () => {
         const newTrip = await db.createTrip(tripData);
         await loadTrip(newTrip.id);
     } catch (error) {
-        alert("Tur oluşturulamadı");
+        alert("Tatil oluşturulamadı.");
     } finally {
         setLoadingDb(false);
     }
@@ -70,7 +70,7 @@ const App: React.FC = () => {
   };
 
   const handleExitTrip = () => {
-    // Doğrudan çıkış yap (window.confirm bazı tarayıcılarda bloklanabilir)
+    // Exit directly
     try {
         localStorage.removeItem('active_trip_id');
     } catch (e) {
@@ -87,17 +87,17 @@ const App: React.FC = () => {
     const amountInBaseCurrency = convertCurrency(rawExpense.amount, rawExpense.currency, trip.baseCurrency);
     const expensePayload: Expense = { ...rawExpense, amountInBaseCurrency };
 
-    // Optimistic UI update (Hemen ekranda göster)
+    // Optimistic UI update
     setExpenses(prev => [expensePayload, ...prev]);
 
-    // DB'ye kaydet
+    // Save to DB
     await db.addExpense(expensePayload);
   };
 
   const handleDeleteExpense = async (id: string) => {
     if(!trip) return;
     
-    if (window.confirm('Bu harcama silinsin mi?')) {
+    if (window.confirm('Bu harcamayı silmek istediğinize emin misiniz?')) {
         // Optimistic UI
         setExpenses(prev => prev.filter(e => e.id !== id));
         await db.deleteExpense(trip.id, id);
@@ -124,14 +124,14 @@ const App: React.FC = () => {
                                 <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
                                     <Map size={32} />
                                 </div>
-                                <h1 className="text-4xl font-bold">TatilCüzdanı</h1>
+                                <h1 className="text-4xl font-bold">HolidayWallet</h1>
                             </div>
                             <p className="text-indigo-100 text-lg mb-8 leading-relaxed">
-                                Seyahat bütçenizi yönetmenin en akıllı yolu. Harcamalarınızı takip edin, arkadaşlarınızla ortak bütçe yapın.
+                                Seyahat bütçenizi yönetmenin en akıllı yolu. Harcamaları takip edin, arkadaşlarınızla paylaşın ve yapay zeka destekli içgörüler alın.
                             </p>
                             <div className="flex gap-3 text-sm font-medium text-indigo-200">
-                                <span className="px-3 py-1 bg-white/10 rounded-full">✈️ Seyahat Planı</span>
-                                <span className="px-3 py-1 bg-white/10 rounded-full">💰 Bütçe Takibi</span>
+                                <span className="px-3 py-1 bg-white/10 rounded-full">✈️ Tatil Planlayıcı</span>
+                                <span className="px-3 py-1 bg-white/10 rounded-full">💰 Bütçe Takip</span>
                             </div>
                         </div>
                   </div>
@@ -157,7 +157,7 @@ const App: React.FC = () => {
                             onClick={() => setMode('join')}
                             className="w-full bg-white border-2 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 text-gray-700 p-5 rounded-xl font-bold text-lg transition flex items-center justify-between group"
                           >
-                             <span>Mevcut Tura Katıl</span>
+                             <span>Mevcut Tatile Katıl</span>
                              <span className="text-gray-400 group-hover:text-indigo-500 transition"><LogOut size={24} className="rotate-180" /></span>
                           </button>
                       </div>
@@ -315,18 +315,6 @@ const App: React.FC = () => {
       )}
     </div>
   );
-};
-
-const getCategoryColor = (cat: string) => {
-    const colors: any = {
-        'Konaklama': '#8884d8',
-        'Yeme-İçme': '#82ca9d',
-        'Ulaşım': '#ffc658',
-        'Aktivite/Müze': '#ff8042',
-        'Alışveriş': '#0088FE',
-        'Diğer': '#aaaaaa'
-    };
-    return colors[cat] || '#ccc';
 };
 
 export default App;

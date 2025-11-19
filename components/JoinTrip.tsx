@@ -22,9 +22,9 @@ const JoinTrip: React.FC<JoinTripProps> = ({ onJoin, onCancel, isLoading }) => {
             <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="bg-slate-800 p-6 text-center">
                     <h2 className="text-2xl font-bold text-white flex items-center justify-center gap-2">
-                        <LogIn size={28} /> Tura Katıl
+                        <LogIn size={28} /> Tatile Katıl
                     </h2>
-                    <p className="text-slate-300 mt-2 text-sm">Arkadaşınızdan aldığınız Tur Kodunu girin.</p>
+                    <p className="text-slate-300 mt-2 text-sm">Arkadaşının paylaştığı Tur Kodunu gir.</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-8 space-y-6">
@@ -49,7 +49,7 @@ const JoinTrip: React.FC<JoinTripProps> = ({ onJoin, onCancel, isLoading }) => {
                             disabled={isLoading}
                             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-md transition duration-200 transform hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            {isLoading ? 'Aranıyor...' : 'Tura Git'} <ArrowRight size={20} />
+                            {isLoading ? 'Aranıyor...' : 'Tatile Git'} <ArrowRight size={20} />
                         </button>
                         
                         <button
