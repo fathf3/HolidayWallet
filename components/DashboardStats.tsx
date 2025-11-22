@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Trip, Expense, Currency } from '../types';
 import { CURRENCY_SYMBOLS, getCategoryColor, convertCurrency } from '../constants';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface DashboardStatsProps {
   trip: Trip;
@@ -77,6 +77,26 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ trip, expenses, viewCur
       }));
   }, [expenses, viewCurrency]);
 
+  // 3. By Date (Daily History)
+  const dailyHistoryData = useMemo(() => {
+      const data: Record<string, number> = {};
+      expenses.forEach(e => {
+          const amount = convertCurrency(e.amount, e.currency, viewCurrency);
+          data[e.date] = (data[e.date] || 0) + amount;
+      });
+
+      return Object.keys(data)
+        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+        .map(dateStr => {
+            const dateObj = new Date(dateStr);
+            return {
+                date: dateStr,
+                name: `${dateObj.getDate()}/${dateObj.getMonth() + 1}`, // Format DD/M
+                amount: data[dateStr]
+            };
+        });
+  }, [expenses, viewCurrency]);
+
   // --- Budget Logic ---
   const budgetStatus = useMemo(() => {
       if (dailyLimit === 0) return { status: 'neutral', message: 'Günlük limit belirlenmedi.' };
@@ -107,59 +127,99 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ trip, expenses, viewCur
       
       {/* Left Column: Charts (Span 2) */}
       <div className="md:col-span-2 space-y-4">
-          {/* Category Chart */}
-          <div className="bg-white p-4 rounded-xl shadow-sm flex flex-col h-[300px]">
-             <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Kategori Dağılımı</h3>
-             <div className="flex-1 w-full">
-                {categoryData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={categoryData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                            >
-                                {categoryData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name)} />
-                                ))}
-                            </Pie>
-                            <Tooltip formatter={(value: number) => `${value.toFixed(0)} ${symbol}`} />
-                            <Legend />
-                        </PieChart>
-                    </ResponsiveContainer>
-                ) : (
-                    <div className="h-full flex items-center justify-center text-gray-300 text-sm">Veri yok</div>
-                )}
-             </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Category Chart */}
+            <div className="bg-white p-4 rounded-xl shadow-sm flex flex-col h-[300px]">
+                <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Kategori Dağılımı</h3>
+                <div className="flex-1 w-full">
+                    {categoryData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={categoryData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={50}
+                                    outerRadius={70}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {categoryData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name)} />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={(value: number) => `${value.toFixed(0)} ${symbol}`} />
+                                <Legend wrapperStyle={{fontSize: '10px'}} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="h-full flex items-center justify-center text-gray-300 text-sm">Veri yok</div>
+                    )}
+                </div>
+            </div>
+
+            {/* Location Chart */}
+            <div className="bg-white p-4 rounded-xl shadow-sm flex flex-col h-[300px]">
+                <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Konum Dağılımı</h3>
+                <div className="flex-1 w-full">
+                    {locationData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={locationData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={50}
+                                    outerRadius={70}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {locationData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS_LOCATION[index % COLORS_LOCATION.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={(value: number) => `${value.toFixed(0)} ${symbol}`} />
+                                <Legend wrapperStyle={{fontSize: '10px'}} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="h-full flex items-center justify-center text-gray-300 text-sm">Veri yok</div>
+                    )}
+                </div>
+            </div>
           </div>
 
-           {/* Location Chart */}
-           <div className="bg-white p-4 rounded-xl shadow-sm flex flex-col h-[300px]">
-             <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Konum Dağılımı</h3>
+          {/* Daily History Chart (New) */}
+          <div className="bg-white p-4 rounded-xl shadow-sm flex flex-col h-[300px]">
+             <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Günlük Harcama Akışı</h3>
              <div className="flex-1 w-full">
-                {locationData.length > 0 ? (
+                {dailyHistoryData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={locationData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                            >
-                                {locationData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS_LOCATION[index % COLORS_LOCATION.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip formatter={(value: number) => `${value.toFixed(0)} ${symbol}`} />
-                            <Legend />
-                        </PieChart>
+                        <BarChart data={dailyHistoryData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                            <XAxis 
+                                dataKey="name" 
+                                tick={{fontSize: 12}} 
+                                axisLine={false} 
+                                tickLine={false} 
+                            />
+                            <YAxis 
+                                tick={{fontSize: 11}} 
+                                axisLine={false} 
+                                tickLine={false}
+                            />
+                            <Tooltip 
+                                formatter={(value: number) => [`${value.toFixed(0)} ${symbol}`, 'Harcama']}
+                                labelStyle={{ color: '#374151', fontWeight: 'bold'}}
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                            />
+                            <Bar 
+                                dataKey="amount" 
+                                fill="#4f46e5" 
+                                radius={[4, 4, 0, 0]} 
+                                barSize={30}
+                            />
+                        </BarChart>
                     </ResponsiveContainer>
                 ) : (
                     <div className="h-full flex items-center justify-center text-gray-300 text-sm">Veri yok</div>

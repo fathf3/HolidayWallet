@@ -54,3 +54,20 @@ export const CURRENCY_SYMBOLS: Record<Currency, string> = {
   [Currency.MKD]: 'den',
   [Currency.ALL]: 'Lek'
 };
+
+// Pre-defined locations for autocomplete
+export const DESTINATIONS: Record<string, string[]> = {
+  'Bosna Hersek': ['Saraybosna', 'Mostar', 'Trebinje', 'Travnik', 'Konjic'],
+  'Sırbistan': ['Belgrad', 'Novi Sad', 'Niş', 'Subotica'],
+  'Karadağ': ['Kotor', 'Budva', 'Podgorica', 'Tivat', 'Herceg Novi'],
+  'Makedonya': ['Üsküp', 'Ohri', 'Manastır', 'Tetova'],
+  'Arnavutluk': ['Tiran', 'Berat', 'Dıraç', 'İşkodra', 'Saranda'],
+  'Kosova': ['Priştine', 'Prizren', 'İpek'],
+  'İtalya': ['Roma', 'Milano', 'Venedik', 'Floransa', 'Napoli'],
+  'Yunanistan': ['Atina', 'Selanik', 'Kavala', 'Santorini', 'Mikonos'],
+  'Fransa': ['Paris', 'Nice', 'Lyon', 'Marsilya'],
+  'Almanya': ['Berlin', 'Münih', 'Hamburg', 'Frankfurt'],
+  'İspanya': ['Barselona', 'Madrid', 'Sevilla', 'Valensiya'],
+  'Hollanda': ['Amsterdam', 'Rotterdam', 'Lahey'],
+  'Türkiye': ['İstanbul', 'Ankara', 'İzmir', 'Antalya', 'Muğla', 'Nevşehir']
+};

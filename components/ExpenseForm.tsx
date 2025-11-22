@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Category, Currency, Expense } from '../types';
 import { PlusCircle, X, MapPin, Globe } from 'lucide-react';
+import { DESTINATIONS } from '../constants';
+import SearchableInput from './SearchableInput';
 
 interface ExpenseFormProps {
   tripId: string;
@@ -15,15 +17,56 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ tripId, onSave, onClose }) =>
   const [category, setCategory] = useState<Category>(Category.Food);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   
-  // New parsed states
+  // Location states
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
+
+  // Recent History State
+  const [recentCountries, setRecentCountries] = useState<string[]>([]);
+  const [recentCities, setRecentCities] = useState<string[]>([]);
+
+  // Load recents from LocalStorage on mount
+  useEffect(() => {
+    try {
+        const savedRecents = localStorage.getItem('hw_recent_locations');
+        if (savedRecents) {
+            const parsed = JSON.parse(savedRecents);
+            if (parsed.countries) setRecentCountries(parsed.countries);
+            if (parsed.cities) setRecentCities(parsed.cities);
+        }
+    } catch (e) {
+        console.error("Error loading recent locations", e);
+    }
+  }, []);
+
+  // Save to recents logic
+  const updateRecents = (newCountry: string, newCity: string) => {
+      const updateList = (list: string[], item: string) => {
+          if (!item) return list;
+          const filtered = list.filter(i => i !== item); // Remove duplicate if exists
+          return [item, ...filtered].slice(0, 3); // Add to top, keep max 3
+      };
+
+      const updatedCountries = updateList(recentCountries, newCountry);
+      const updatedCities = updateList(recentCities, newCity);
+
+      setRecentCountries(updatedCountries);
+      setRecentCities(updatedCities);
+
+      localStorage.setItem('hw_recent_locations', JSON.stringify({
+          countries: updatedCountries,
+          cities: updatedCities
+      }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !amount || !date) return;
 
-    // Combine location data (Keep legacy structure support)
+    // Update history
+    updateRecents(country, city);
+
+    // Combine location data
     const locationCombined = (city && country) ? `${city}, ${country}` : (city || country || 'Bilinmiyor');
 
     onSave({
@@ -41,10 +84,13 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ tripId, onSave, onClose }) =>
     onClose();
   };
 
+  // Determine City Options based on Country
+  const cityOptions = country && DESTINATIONS[country] ? DESTINATIONS[country] : [];
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
-        <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in h-[90vh] overflow-y-auto md:h-auto">
+        <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center sticky top-0 z-10">
           <h3 className="text-lg font-bold text-gray-800">Harcama Ekle</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X size={24} />
@@ -117,34 +163,27 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ tripId, onSave, onClose }) =>
             </div>
           </div>
 
-          {/* New Country and City Fields */}
+          {/* Smart Location Inputs */}
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Ülke</label>
-              <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                  <input
-                  type="text"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  placeholder="Örn: İtalya"
-                  className="w-full pl-9 p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition text-gray-900"
-                  />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Şehir</label>
-              <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                  <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="Örn: Roma"
-                  className="w-full pl-9 p-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition text-gray-900"
-                  />
-              </div>
-            </div>
+            <SearchableInput 
+                label="Ülke"
+                value={country}
+                onChange={setCountry}
+                options={Object.keys(DESTINATIONS)}
+                recentItems={recentCountries}
+                placeholder="Örn: İtalya"
+                icon={<Globe size={16} />}
+            />
+            
+            <SearchableInput 
+                label="Şehir"
+                value={city}
+                onChange={setCity}
+                options={cityOptions}
+                recentItems={recentCities}
+                placeholder="Örn: Roma"
+                icon={<MapPin size={16} />}
+            />
           </div>
 
           <button
